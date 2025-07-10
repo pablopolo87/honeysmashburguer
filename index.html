@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atrapa la Honey - Honey Smash Burgers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #FF6B35, #F7931E);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: #FFF8E1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            background: linear-gradient(90deg, #FF6B35, #F7931E);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-area {
+            height: calc(100vh - 80px);
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #FFF8E1);
+        }
+
+        .hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .score, .timer {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #FF6B35;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .player {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 60px;
+            background: linear-gradient(45deg, #8B4513, #A0522D);
+            border-radius: 10px;
+            border: 3px solid #654321;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            z-index: 10;
+        }
+
+        .player:before {
+            content: '🍴';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+        }
+
+        .falling-item {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 35px;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            animation: fall linear;
+            z-index: 5;
+        }
+
+        .good-item {
+            background: radial-gradient(circle, #FFD700, #FFA500);
+            box-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        .bad-item {
+            background: radial-gradient(circle, #FF4444, #AA0000);
+            box-shadow: 0 0 10px rgba(255,0,0,0.5);
+        }
+
+        .rafa {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: #FFE4B5;
+            border-radius: 50%;
+            border: 3px solid #DEB887;
+            cursor: pointer;
+            animation: bounce 0.5s infinite alternate;
+            z-index: 20;
+        }
+
+        .rafa:before {
+            content: '👨‍🍳';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+        }
+
+        .rafa:after {
+            content: '🥄';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 25px;
+            animation: swing 0.3s infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        @keyframes swing {
+            0%, 100% { transform: rotate(-20deg); }
+            50% { transform: rotate(20deg); }
+        }
+
+        .menu-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .menu-screen h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .menu-screen p {
+            font-size: 16px;
+            margin-bottom: 30px;
+            padding: 0 20px;
+            line-height: 1.5;
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255,107,53,0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(255,107,53,0.4);
+        }
+
+        .registration-form {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px;
+            color: #333;
+        }
+
+        .registration-form h2 {
+            color: #FF6B35;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            border-color: #FF6B35;
+            outline: none;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .leaderboard {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            color: #333;
+        }
+
+        .leaderboard h3 {
+            color: #FF6B35;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle-float 1s ease-out forwards;
+        }
+
+        @keyframes particle-float {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) translateY(-50px);
+            }
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 101;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                border-radius: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            🍔 Atrapa la Honey 🍔
+        </div>
+        
+        <div class="game-area">
+            <button class="sound-toggle" onclick="toggleSound()">🔊</button>
+            
+            <div class="hud">
+                <div class="score">Puntos: <span id="score">0</span></div>
+                <div class="timer">Tiempo: <span id="timer">25</span>s</div>
+            </div>
+            
+            <div class="player" id="player"></div>
+        </div>
+
+        <div class="menu-screen" id="menuScreen">
+            <h1>🍔 Atrapa la Honey 🍔</h1>
+            <p>¡Mueve la bandeja para atrapar los ingredientes buenos y evita los malos!</p>
+            <p>🍔 Ingredientes buenos: +10 puntos</p>
+            <p>🔥 Ingredientes malos: -10 puntos</p>
+            <p>👨‍🍳 ¡Toca a Rafa rápido para evitar que te golpee!</p>
+            <button class="start-btn" onclick="startGame()">¡Empezar a Jugar!</button>
+        </div>
+
+        <div class="game-over-screen" id="gameOverScreen" style="display: none;">
+            <h2>¡Partida Terminada!</h2>
+            <p>Tu puntuación final: <span id="finalScore">0</span> puntos</p>
+            
+            <div class="registration-form">
+                <h2>¡Regístrate para el sorteo!</h2>
+                <div class="form-group">
+                    <label for="playerName">Nombre:</label>
+                    <input type="text" id="playerName" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label for="playerPhone">Teléfono:</label>
+                    <input type="tel" id="playerPhone" placeholder="Tu teléfono">
+                </div>
+                <button class="submit-btn" onclick="registerPlayer()">Registrar y Ver Ranking</button>
+            </div>
+            
+            <div class="leaderboard" id="leaderboard" style="display: none;">
+                <h3>🏆 Top 10 del Mes 🏆</h3>
+                <div id="leaderboardList"></div>
+                <button class="restart-btn" onclick="restartGame()">Jugar Mañana</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            score: 0,
+            timeLeft: 25,
+            gameRunning: false,
+            soundEnabled: true,
+            playerX: 50,
+            fallingItems: [],
+            rafaItems: [],
+            lastPlayDate: null
+        };
+
+        const goodItems = ['🍔', '🧀', '🥓', '🍅', '🥬', '🟡'];
+        const badItems = ['🔥', '💩', '🗑️', '🦠', '☠️', '🐛'];
+
+        // Sonidos simulados con Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(frequency, duration, type = 'sine') {
+            if (!gameState.soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.querySelector('.sound-toggle').textContent = gameState.soundEnabled ? '🔊' : '🔇';
+        }
+
+        function canPlayToday() {
+            const today = new Date().toDateString();
+            const lastPlay = localStorage.getItem('lastPlayDate');
+            return lastPlay !== today;
+        }
+
+        function startGame() {
+            if (!canPlayToday()) {
+                alert('¡Ya jugaste hoy! Vuelve mañana para una nueva oportunidad.');
+                return;
+            }
+
+            document.getElementById('menuScreen').style.display = 'none';
+            gameState.gameRunning = true;
+            gameState.score = 0;
+            gameState.timeLeft = 25;
+            
+            updateHUD();
+            gameLoop();
+            
+            // Crear items que caen
+            setInterval(() => {
+                if (gameState.gameRunning) {
+                    createFallingItem();
+                }
+            }, 800);
+            
+            // Crear Rafa ocasionalmente
+            setInterval(() => {
+                if (gameState.gameRunning && Math.random() < 0.3) {
+                    createRafa();
+                }
+            }, 3000);
+        }
+
+        function gameLoop() {
+            if (!gameState.gameRunning) return;
+            
+            gameState.timeLeft--;
+            updateHUD();
+            
+            if (gameState.timeLeft <= 0) {
+                endGame();
+                return;
+            }
+            
+            setTimeout(gameLoop, 1000);
+        }
+
+        function createFallingItem() {
+            const item = document.createElement('div');
+            const isGood = Math.random() < 0.7;
+            const itemType = isGood ? goodItems[Math.floor(Math.random() * goodItems.length)] : badItems[Math.floor(Math.random() * badItems.length)];
+            
+            item.className = `falling-item ${isGood ? 'good-item' : 'bad-item'}`;
+            item.textContent = itemType;
+            item.style.left = Math.random() * 85 + '%';
+            item.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            item.dataset.points = isGood ? '10' : '-10';
+            
+            document.querySelector('.game-area').appendChild(item);
+            gameState.fallingItems.push(item);
+            
+            // Eliminar después de la animación
+            setTimeout(() => {
+                if (item.parentNode) {
+                    item.parentNode.removeChild(item);
+                }
+                const index = gameState.fallingItems.indexOf(item);
+                if (index > -1) {
+                    gameState.fallingItems.splice(index, 1);
+                }
+            }, 5000);
+        }
+
+        function createRafa() {
+            const rafa = document.createElement('div');
+            rafa.className = 'rafa';
+            rafa.style.left = Math.random() * 70 + '%';
+            rafa.style.top = Math.random() * 60 + 10 + '%';
+            
+            rafa.onclick = () => {
+                playSound(800, 0.2);
+                createParticles(rafa);
+                gameState.score += 5;
+                updateHUD();
+                rafa.remove();
+            };
+            
+            document.querySelector('.game-area').appendChild(rafa);
+            
+            // Rafa desaparece después de 2 segundos y resta puntos
+            setTimeout(() => {
+                if (rafa.parentNode) {
+                    gameState.score -= 5;
+                    updateHUD();
+                    playSound(200, 0.3);
+                    rafa.remove();
+                }
+            }, 2000);
+        }
+
+        function createParticles(element) {
+            const rect = element.getBoundingClientRect();
+            const gameArea = document.querySelector('.game-area');
+            
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = (rect.left + rect.width/2) + 'px';
+                particle.style.top = (rect.top + rect.height/2) + 'px';
+                particle.style.transform = `translate(${(Math.random() - 0.5) * 100}px, ${(Math.random() - 0.5) * 100}px)`;
+                
+                gameArea.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 1000);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('timer').textContent = gameState.timeLeft;
+        }
+
+        function endGame() {
+            gameState.gameRunning = false;
+            localStorage.setItem('lastPlayDate', new Date().toDateString());
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            
+            // Limpiar items restantes
+            gameState.fallingItems.forEach(item => {
+                if (item.parentNode) {
+                    item.parentNode.removeChild(item);
+                }
+            });
+            gameState.fallingItems = [];
+        }
+
+        function registerPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const phone = document.getElementById('playerPhone').value.trim();
+            
+            if (!name || !phone) {
+                alert('Por favor, completa todos los campos.');
+                return;
+            }
+            
+            // Simular registro en base de datos
+            const playerData = {
+                name: name,
+                phone: phone,
+                score: gameState.score,
+                date: new Date().toISOString()
+            };
+            
+            // Guardar en localStorage (en producción sería una base de datos)
+            let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            leaderboard.push(playerData);
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            
+            showLeaderboard();
+            playSound(600, 0.5);
+        }
+
+        function showLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            const leaderboardList = document.getElementById('leaderboardList');
+            
+            leaderboardList.innerHTML = '';
+            leaderboard.forEach((player, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'leaderboard-entry';
+                entry.innerHTML = `
+                    <span>${index + 1}. ${player.name}</span>
+                    <span>${player.score} pts</span>
+                `;
+                leaderboardList.appendChild(entry);
+            });
+            
+            document.querySelector('.registration-form').style.display = 'none';
+            document.getElementById('leaderboard').style.display = 'block';
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('menuScreen').style.display = 'flex';
+            gameState.score = 0;
+            gameState.timeLeft = 25;
+            updateHUD();
+        }
+
+        // Control táctil del jugador
+        let isDragging = false;
+        const player = document.getElementById('player');
+        const gameArea = document.querySelector('.game-area');
+
+        function handleMove(clientX) {
+            if (!gameState.gameRunning) return;
+            
+            const rect = gameArea.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const percentage = (x / rect.width) * 100;
+            const clampedPercentage = Math.max(5, Math.min(95, percentage));
+            
+            player.style.left = clampedPercentage + '%';
+            gameState.playerX = clampedPercentage;
+        }
+
+        // Eventos táctiles
+        gameArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            handleMove(e.touches[0].clientX);
+        });
+
+        gameArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging) {
+                handleMove(e.touches[0].clientX);
+            }
+        });
+
+        gameArea.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Eventos de mouse para desktop
+        gameArea.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            handleMove(e.clientX);
+        });
+
+        gameArea.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                handleMove(e.clientX);
+            }
+        });
+
+        gameArea.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Detectar colisiones
+        setInterval(() => {
+            if (!gameState.gameRunning) return;
+            
+            const playerRect = player.getBoundingClientRect();
+            
+            gameState.fallingItems.forEach((item, index) => {
+                const itemRect = item.getBoundingClientRect();
+                
+                if (playerRect.left < itemRect.right &&
+                    playerRect.right > itemRect.left &&
+                    playerRect.top < itemRect.bottom &&
+                    playerRect.bottom > itemRect.top) {
+                    
+                    const points = parseInt(item.dataset.points);
+                    gameState.score += points;
+                    updateHUD();
+                    
+                    if (points > 0) {
+                        playSound(500, 0.2);
+                    } else {
+                        playSound(150, 0.3);
+                    }
+                    
+                    createParticles(item);
+                    item.remove();
+                    gameState.fallingItems.splice(index, 1);
+                }
+            });
+        }, 50);
+
+        // Inicializar
+        updateHUD();
+        
+        // Verificar si puede jugar hoy
+        if (!canPlayToday()) {
+            document.querySelector('.start-btn').textContent = 'Ya jugaste hoy - Vuelve mañana';
+            document.querySelector('.start-btn').style.opacity = '0.5';
+        }
+    </script>
+</body>
+</html>
